@@ -38,7 +38,7 @@ module Nucleon
         test_type Manager.environments, Hash
         #memory location value keeps on changing . How can we validate the data ?
         Nucleon.dump_enabled=true
-          dbg(manager.environments)
+          dbg(Manager.environments)
         Nucleon.dump_enabled=false
       end
     end
@@ -125,7 +125,7 @@ module Nucleon
     
     describe "#namespaces" do
       
-      it "is an example" do
+      it "returns all the defined namespaces" do
         manager("Nucleon::Manager::config",true) do |manager|
           manager.define_type :nucleon, :test, :first
           manager.define_type :unit, :test, :first
@@ -135,6 +135,98 @@ module Nucleon
       end
     end
     
+    # Return all of the defined plugin types in a plugin namespace.
+    #
     
+    describe "#types" do
+      
+      it "returns all the defined types in a plugin namespace" do
+        manager("Nucleon::Manager::config",true) do |manager|
+          manager.define_type :nucleon, :test, :first
+          manager.define_type :nucleon, :test1, :second
+          manager.define_type :nucleon, :test2, :third
+          test_eq manager.types(:nucleon), [:test, :test1, :test2]
+        end
+      end
+    end
+    
+    # Define a new plugin type in a specified namespace.
+    #
+    
+    describe "#define_type" do
+      
+      it "is an example" do
+        # Validating Return Type right now. 
+        # Do we need to validate Return value if so memory location value keeps on changing . Do we need to validate this data ? . export not working 
+        manager("Nucleon::Manager::config",true) do |manager|
+          test_type manager.define_type(:nucleon, :test, :first), Nucleon::Manager
+        end
+      end
+    end
+    
+    # Define one or more new plugin types in a specified namespace.
+    #
+    
+    describe "#define_types" do
+      
+      it "returns an Environment object" do
+        manager("Nucleon::Manager::config",true) do |manager|
+          test_type manager.define_types(:nucleon, { :test1 => "test2", :test3 => "test4"}), Nucleon::Environment
+        end
+      end
+      
+      it "returns loaded plugin state" do
+        manager("Nucleon::Manager::config",true) do |manager|
+          test_config manager.define_types(:nucleon, { :test1 => "test2", :test3 => "test4"}), plugin_environment_test2
+        end
+      end
+    end
+    
+    # Check if a specified plugin type has been defined
+    #
+    
+    describe "#type_defined?" do
+      
+      it "returns true for the existing plugin type" do
+        manager("Nucleon::Manager::config",true) do |manager|
+          manager.define_types(:nucleon, { :test1 => "test2", :test3 => "test4"})
+          manager.define_type(:nucleon, :test, :first)
+          manager.define_type :nucleon, :test2, :third
+          test_eq manager.type_defined?(:nucleon, :test3), true
+          test_eq manager.type_defined?(:nucleon, :test2), true
+        end
+      end
+      
+      it "returns false for the non existing plugin type" do
+        manager("Nucleon::Manager::config",true) do |manager|
+          manager.define_types(:nucleon, { :test1 => "test2", :test3 => "test4"})
+          manager.define_type(:nucleon, :test, :first)
+          manager.define_type :nucleon, :test2, :third
+          test_eq manager.type_defined?(:nucleon, :test4), false
+          test_eq manager.type_defined?(:nucleon1, :test2), false
+        end
+      end      
+    end
+    
+    # Return the default provider currently registered for a plugin type
+    #
+    
+    describe "#type_default" do
+      
+      it "returns default provider for defined plugin type" do
+        manager("Nucleon::Manager::config",true) do |manager|
+          manager.define_types(:nucleon, { :test1 => "test2", :test3 => "test4"})
+          manager.define_type(:nucleon, :test, :first)
+          manager.define_type :nucleon, :test2, :third          
+          test_eq manager.type_default(:nucleon, :test2), :third
+        end
+      end
+      
+      it "returns nil for undefined plugin type" do
+        manager("Nucleon::Manager::config",true) do |manager|
+          test_eq manager.type_default(:nucleon, :test2), nil
+        end  
+      end
+    end    
   end
 end
