@@ -126,9 +126,15 @@ module Nucleon
     describe "#namespaces" do
       
       it "is an example" do
-        #Do we need to create any plugins before testing this method? As of now it is returning an empty array
-        puts manager("Nucleon::Manager::config",true).namespaces
+        manager("Nucleon::Manager::config",true) do |manager|
+          manager.define_type :nucleon, :test, :first
+          manager.define_type :unit, :test, :first
+          manager.define_type :testing, :test, :first
+          test_eq manager.namespaces, [:nucleon, :unit, :testing]
+        end
       end
     end
+    
+    
   end
 end
