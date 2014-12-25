@@ -10,7 +10,19 @@ module Nucleon
     def manager(*args, &code)
       test_object(Manager, *args, &code)
     end
-
+    
+    def test_loaded_plugin(manager, plugin_type, provider_map)
+      plugin_define_plugins(manager, plugin_type, provider_map) do |type, provider|
+        plugin_info = manager.loaded_plugin(:nucleon, type, provider)
+        test_eq plugin_info, plugin_loaded_plugins[:nucleon][type][provider]
+      end
+    end
+    
+    def test_loaded_plugins(manager, plugin_type, provider_map)
+      plugin_define_plugins(manager, plugin_type, provider_map)
+      test_eq manager.loaded_plugins[:nucleon][plugin_type], plugin_loaded_plugins[:nucleon][plugin_type]    
+    end    
+        
     #
     # Accessor for the global supervisors (mostly for testing purposes)
     #
@@ -227,6 +239,232 @@ module Nucleon
           test_eq manager.type_default(:nucleon, :test2), nil
         end  
       end
-    end    
+    end
+    
+    # Return the load information for a specified plugin provider if it exists
+    #
+    
+    describe "#loaded_plugin" do
+      it "load info of translator plugins" do
+        manager("Nucleon::Manager::config",true) do |manager|
+          test_loaded_plugin(manager, :translator, {:json => 'JSON', :yaml => 'YAML' })
+        end
+      end
+
+      
+      it "load info of template plugins" do
+        manager("Nucleon::Manager::config",true) do |manager|
+          test_loaded_plugin(manager, :template, { :json => 'JSON', :yaml => 'YAML', :wrapper => 'wrapper' })
+        end
+      end
+      
+      it "load info of project plugins" do
+        manager("Nucleon::Manager::config",true) do |manager|
+          test_loaded_plugin(manager, :project, { :git => 'git', :github => 'github' }) 
+        end
+      end
+      
+      it "load info of extension plugins" do
+        manager("Nucleon::Manager::config",true) do |manager|
+          test_loaded_plugin(manager, :extension, { :project => 'project' })
+        end        
+      end
+      
+      it "load info of event plugins" do
+        manager("Nucleon::Manager::config",true) do |manager|
+          test_loaded_plugin(manager, :event, { :regex => 'regex' })  
+        end        
+      end
+      
+      it "load info of command plugins" do
+        manager("Nucleon::Manager::config",true) do |manager|
+          test_loaded_plugin(manager, :command, { :bash => 'bash' })  
+        end        
+      end
+      
+      it "load info of action - project plugins" do
+        manager("Nucleon::Manager::config",true) do |manager|
+          plugin_define_plugins(manager, :action, { :project_update => [ 'project', 'update' ], :project_ceate => [ 'project', 'create' ], :project_save => [ 'project', 'save' ], 
+                                                    :project_remove => [ 'project', 'remove' ], :project_add => [ 'project',  'add' ],:extract => 'extract' })
+        end         
+      end      
+    end
+    
+    # Return the load information for namespaces, plugin types, providers if it exists
+    # 
+    
+    describe "#loaded_plugins" do
+      
+      it "returns loaded plugins for nil params" do
+        test_eq manager("Nucleon::Manager::config",true).loaded_plugins, {}
+        manager("Nucleon::Manager::config",true) do |manager|
+          plugin_define_plugins(manager, :project, { :github => 'github', :git => 'git' })
+          plugin_define_plugins(manager, :event, { :regex => 'regex' })
+          plugin_define_plugins(manager, :extension, { :project => 'project' })
+          plugin_define_plugins(manager, :command, { :bash => 'bash' })
+          plugin_define_plugins(manager, :translator, { :json => 'JSON', :yaml => 'YAML' })
+          plugin_define_plugins(manager, :action, { :project_update => [ 'project', 'update' ], :project_ceate => [ 'project', 'create' ], :project_save => [ 'project', 'save' ], 
+                                                    :project_remove => [ 'project', 'remove' ], :project_add => [ 'project',  'add' ],:extract => 'extract' }) 
+          plugin_define_plugins(manager, :template, { :json => 'JSON', :yaml => 'YAML', :wrapper => 'wrapper' })
+          
+          test_eq manager.loaded_plugins, plugin_loaded_plugins
+        end
+      end
+      
+      it "returns loaded translator plugins provided namespace alone" do
+        manager("Nucleon::Manager::config",true) do |manager|
+          test_loaded_plugins manager, :translator,{ :json => 'JSON', :yaml => 'YAML' }
+        end
+      end
+      
+      it "returns loaded template plugins provide namespace alone" do
+        manager("Nucleon::Manager::config",true) do |manager|
+          test_loaded_plugins manager, :template,{ :json => 'JSON', :wrapper => 'wrapper', :yaml => 'YAML' }  
+        end
+      end
+      
+      it "returns loaded project plugins provide namespace alone" do
+         test_loaded_plugins manager("Nucleon::Manager::config",true), :project,{ :git => 'git', :github => 'github' }
+      end
+      
+      it "returns loaded extension plugins provide namespace alone" do
+         test_loaded_plugins manager("Nucleon::Manager::config",true), :extension,{ :project => 'project' }
+      end
+
+      it "returns loaded event plugins provide namespace alone" do
+         test_loaded_plugins manager("Nucleon::Manager::config",true), :event,{ :regex => 'regex' }
+      end
+      
+      it "returns loaded command plugins provide namespace alone" do
+         test_loaded_plugins manager("Nucleon::Manager::config",true), :command,{ :bash => 'bash' }
+      end
+      
+      it "returns action command plugins provide namespace alone" do
+         test_loaded_plugins manager("Nucleon::Manager::config",true), :action,{ :project_update => [ 'project', 'update' ], :project_save => [ 'project', 'save' ], :project_remove => [ 'project', 'remove' ], 
+                                                    :project_ceate => [ 'project', 'create' ],:project_add => [ 'project',  'add' ],:extract => 'extract' }
+      end
+
+      it "returns loaded translator plugins provided namespace and plugin type" do
+         test_loaded_plugins manager("Nucleon::Manager::config",true), :translator,{ :json => 'JSON', :yaml => 'YAML' }
+      end
+      
+      it "returns loaded template plugins provide namespace and plugin type" do
+         test_loaded_plugins manager("Nucleon::Manager::config",true), :template,{ :json => 'JSON', :wrapper => 'wrapper', :yaml => 'YAML' }
+      end
+      
+      it "returns loaded project plugins provide namespace and plugin type" do
+         test_loaded_plugins manager("Nucleon::Manager::config",true), :project,{ :git => 'git', :github => 'github' }
+      end
+      
+      it "returns loaded extension plugins provide namespace and plugin type" do
+         test_loaded_plugins manager("Nucleon::Manager::config",true), :extension,{ :project => 'project' }
+      end
+
+      it "returns loaded event plugins provide namespace and plugin type" do
+         test_loaded_plugins manager("Nucleon::Manager::config",true), :event,{ :regex => 'regex' }
+      end
+      
+      it "returns loaded command plugins provide namespace and plugin type" do
+         test_loaded_plugins manager("Nucleon::Manager::config",true), :command,{ :bash => 'bash' }
+      end
+      
+      it "returns action command plugins provide namespace and plugin type" do
+        test_loaded_plugins manager("Nucleon::Manager::config",true), :action,{ :project_update => [ 'project', 'update' ], :project_save => [ 'project', 'save' ], :project_remove => [ 'project', 'remove' ], 
+                                                              :project_ceate => [ 'project', 'create' ],:project_add => [ 'project',  'add' ],:extract => 'extract' }
+      end
+
+      it "returns loaded translator plugins provided namespace ,plugin type and provider" do
+         test_loaded_plugins manager("Nucleon::Manager::config",true), :translator,{ :json => 'JSON', :yaml => 'YAML' }
+      end
+      
+      it "returns loaded template plugins provide namespace ,plugin type and provider" do
+         test_loaded_plugins manager("Nucleon::Manager::config",true), :template,{ :json => 'JSON', :wrapper => 'wrapper', :yaml => 'YAML' }
+      end
+      
+      it "returns loaded project plugins provide namespace ,plugin type and provider" do
+         test_loaded_plugins manager("Nucleon::Manager::config",true), :project,{ :git => 'git', :github => 'github' }
+      end
+      
+      it "returns loaded extension plugins provide namespace ,plugin type and provider" do
+         test_loaded_plugins manager("Nucleon::Manager::config",true), :extension,{ :project => 'project' }
+      end
+
+      it "returns loaded event plugins provide namespace ,plugin type and provider" do
+         test_loaded_plugins manager("Nucleon::Manager::config",true), :event,{ :regex => 'regex' }
+      end
+      
+      it "returns loaded command plugins provide namespace ,plugin type and provider" do
+         test_loaded_plugins manager("Nucleon::Manager::config",true), :command,{ :bash => 'bash' }
+      end
+      
+      it "returns action command plugins provide namespace ,plugin type and provider" do
+         test_loaded_plugins manager("Nucleon::Manager::config",true), :action,{ :project_update => [ 'project', 'update' ], :project_save => [ 'project', 'save' ], :project_remove => [ 'project', 'remove' ], 
+                                                              :project_ceate => [ 'project', 'create' ],:project_add => [ 'project',  'add' ],:extract => 'extract' }
+      end      
+    end
+    
+    # Define a new plugin provider of a specified plugin type.
+    #
+    
+    describe "#define_plugin" do
+      
+      it "registers translator plugins" do
+        test_eq plugin_define_plugins(manager("Nucleon::Manager::config",true), :translator, { :json => 'JSON', :yaml => 'YAML' }),
+                {:json=>"JSON", :yaml=>"YAML"}
+      end
+      
+       it "registers template plugins" do
+        test_eq plugin_define_plugins(manager("Nucleon::Manager::config",true), :template, { :json => 'JSON', :yaml => 'YAML', :wrapper => 'wrapper' }),
+                {:json=>"JSON", :yaml=>"YAML", :wrapper=>"wrapper"}
+      end
+      
+      it "registers project plugins" do
+        test_eq plugin_define_plugins(manager("Nucleon::Manager::config",true), :project, { :git => 'git', :github => 'github' }),
+                { :git => 'git', :github => 'github' }
+      end
+      
+      it "registers extension plugins" do
+        test_eq plugin_define_plugins(manager("Nucleon::Manager::config",true), :extension, { :project => 'project' }),
+                { :project => 'project' }
+      end
+      
+      it "registers event plugins" do
+        test_eq plugin_define_plugins(manager("Nucleon::Manager::config",true), :event, { :regex => 'regex' }),
+                { :regex => 'regex' }
+      end
+      
+      it "registers command plugins" do
+        test_eq plugin_define_plugins(manager("Nucleon::Manager::config",true), :command, { :bash => 'bash' }),
+                { :bash => 'bash' }
+      end
+      
+      it "registers action plugins" do
+        test_eq plugin_define_plugins(manager("Nucleon::Manager::config",true), :action, { :project_update => [ 'project', 'update' ], :project_ceate => [ 'project', 'create' ], :project_save => [ 'project', 'save' ], 
+                                             :project_remove => [ 'project', 'remove' ], :project_add => [ 'project',  'add' ],:extract => 'extract' }),
+                { :project_update => [ 'project', 'update' ], :project_ceate => [ 'project', 'create' ], :project_save => [ 'project', 'save' ], 
+                                             :project_remove => [ 'project', 'remove' ], :project_add => [ 'project',  'add' ],:extract => 'extract' }                                          
+      end      
+    end
+    
+    # Check if a specified plugin provider has been loaded
+    #
+    
+    describe "#plugin_has_provider?" do
+      
+      it "returns true for a loded plugin and provider" do
+        manager("Nucleon::Manager::config",true) do |manager|
+          plugin_define_plugins manager, :translator,{ :json => 'JSON' }
+          test_eq manager.plugin_has_provider?(:nucleon, :translator, :json), true
+        end
+      end
+  
+      it "returns false for a non loded plugin and provider" do
+        manager("Nucleon::Manager::config",true) do |manager|
+          plugin_define_plugins manager, :action,{ :project_update => [ 'project', 'update' ], :project_save => [ 'project', 'save' ], :project_remove => [ 'project', 'remove' ], 
+                                                           :project_add => [ 'project',  'add' ],:extract => 'extract' }
+          test_eq manager.plugin_has_provider?(:nucleon, :action, :project_ceate), false  
+        end
+      end
+    end  
   end
 end
