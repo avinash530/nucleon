@@ -377,4 +377,23 @@ RSpec.shared_context "nucleon_plugin" do
     test_config environment, plugin_test_autoload_environment
     environment
   end
+  
+  def plugin_autoload_test_manager(manager)
+    plugin_define_test_manager(manager)
+    manager.autoload
+
+    #test_config manager, plugin_test_autoload_environment
+    manager
+  end  
+  
+  def plugin_define_test_manager(manager)
+    plugin_path = File.join(plugin_base_path, 'spec', 'nucleon', 'test')
+
+    manager.define_type(:nucleon, :test, :first)
+    manager.define_plugin(:nucleon, :test, plugin_path, File.join(plugin_path, "first.rb"))
+    manager.define_plugin(:nucleon, :test, plugin_path, File.join(plugin_path, "second.rb"))
+
+    #test_config manager, plugin_test_environment
+    manager
+  end 
 end

@@ -465,6 +465,35 @@ module Nucleon
           test_eq manager.plugin_has_provider?(:nucleon, :action, :project_ceate), false  
         end
       end
-    end  
+    end
+    
+    # Return active plugins for namespaces, plugin types, providers if specified
+    #
+    
+    describe "#active_plugins" do
+      #Unable to use .export with the below manager object. So I commented line 385, 396 in nucleon_plugin.rb
+      it "returns appropriate return type" do     
+        manager("Nucleon::Manager::config",true) do |manager|
+          plugin_autoload_test_manager(manager)
+          manager.create(:nucleon, :test, :first, { :test1 => 13, :test2 => 5})
+          manager.create(:nucleon, :test, :second, { :test1 => 15 })
+          test_type(manager.active_plugins, Hash)
+          test_type(manager.active_plugins(:nucleon), Hash)
+          test_type(manager.active_plugins(:nucleon, :test), Hash)
+          test_type(manager.active_plugins(:nucleon, :test, :first), Hash)
+          test_type((manager.active_plugins(:nucleon, :test)[:first_bf21a9e8fbc5a3846fb05b4fa0859e0917b2202f]), Nucleon::Test::First)
+        end
+        
+      end
+      
+      it "returns appropriate return value" do
+        manager("Nucleon::Manager::config",true) do |manager|
+          plugin_autoload_test_manager(manager)
+          manager.create(:nucleon, :test, :first, { :test1 => 13, :test2 => 5})
+          manager.create(:nucleon, :test, :second, { :test1 => 15 })
+          test_config((manager.active_plugins[:nucleon][:test][:first_bf21a9e8fbc5a3846fb05b4fa0859e0917b2202f]), {:test1=>13, :test2=>5})
+        end
+      end
+    end
   end
 end
