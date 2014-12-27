@@ -29,7 +29,8 @@ class Project < Nucleon.plugin_class(:nucleon, :base)
 
       return Nucleon.project(config.import({
         :name      => directory,
-        :directory => directory
+        :directory => directory,
+        :corl_file => config.get(:corl_file, true)
       }), provider)
 
     else
@@ -73,7 +74,7 @@ class Project < Nucleon.plugin_class(:nucleon, :base)
       @cache = Util::Cache.new(directory, Nucleon.sha1(plugin_name), '.project_cache')
       init_cache
 
-      unless self.class.load_provider(directory)
+      if get(:corl_file, true) && ! self.class.load_provider(directory)
         self.class.store_provider(directory, plugin_provider)
       end
     end
@@ -522,7 +523,7 @@ class Project < Nucleon.plugin_class(:nucleon, :base)
           if add_project
             logger.debug("Directory #{project_path} is a valid sub project for this #{plugin_provider} project")
 
-            project = myself.class.open(project_path, plugin_provider)
+            project = myself.class.open(project_path, plugin_provider, { :corl_file => get(:corl_file, true) })
 
             extension(:load_project, { :project => project })
             subprojects[path] = project
