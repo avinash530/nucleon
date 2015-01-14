@@ -495,5 +495,60 @@ module Nucleon
         end
       end
     end
+    
+    #*****************************************************************************
+    # Plugin registration / initialization
+    
+    #TO::DO -- Waiting for additional comments and what to be validated
+    describe "#reload" do
+      
+      it "is an example" do
+        manager("Nucleon::Manager::config",true) do |manager|
+          #test_type manager.define_types(:nucleon, { :test1 => "test2", :test3 => "test4"}), Nucleon::Environment
+          puts manager.reload(true, [:nucleon])
+        end
+      end
+    end
+    
+    # Please confirm whether right validation is done or not !
+    
+    describe "#register" do
+      
+      it "is returns the defined namespace" do
+        manager("Nucleon::Manager::config",true) do |manager|
+          manager.define_type :nucleon, :test, :first
+          manager.define_type :unit, :test, :first
+          manager.define_type :testing, :test, :first
+          test_eq manager.register(plugin_base_path), [:nucleon, :unit, :testing]
+        end
+      end
+    end
+    
+    # Autoload all of the defined plugins
+    #
+    
+    #commented test_config part in plugin_autoload_test_manager, export throwing undefined error.
+    describe "#autoload" do
+      
+      it "tests autoloaded plugin" do
+        manager("Nucleon::Manager::config",true) do |manager|
+          plugin_autoload_test_manager(manager)
+         # puts manager.autoload[0]
+        end
+      end
+    end
+    
+    #*****************************************************************************
+    # Plugin workflow
+    #This does not return anything. Am I invoking it in a right way ? How to validate this method?
+    describe "#load_base" do
+      
+      it "is an example" do
+        manager("Nucleon::Manager::config",true) do |manager|
+          puts manager.create(:nucleon, :test, :first, { :test1 => 13 })
+          puts manager.load_base(:nucleon, :test, :first, { :test1 => 13 }).class
+        end
+      end
+    end        
   end
 end
