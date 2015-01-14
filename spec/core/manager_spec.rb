@@ -545,8 +545,7 @@ module Nucleon
       
       it "is an example" do
         manager("Nucleon::Manager::config",true) do |manager|
-          puts manager.create(:nucleon, :test, :first, { :test1 => 13 })
-          puts manager.load_base(:nucleon, :test, :first, { :test1 => 13 }).class
+          manager.load_base(:nucleon, :test, :first, { :test1 => 13 }).class
         end
       end
     end        
